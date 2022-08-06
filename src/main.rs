@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, time::Instant};
 
 use serde::Deserialize;
 
@@ -55,12 +55,18 @@ fn main() -> Result<(), reqwest::Error> {
         .user_agent("github-stats-cli")
         .build()?;
 
+    let now = Instant::now();
     let response = client.get(url).send()?;
+    println!("web request took {} ms.", now.elapsed().as_millis());
 
+    let now = Instant::now();
     let data: Vec<Release> = response.json()?;
+    println!("parsing took {} ms.", now.elapsed().as_millis());
 
+    let now = Instant::now();
     for r in data {
         println!("{r}");
     }
+    println!("printing took {} ms.", now.elapsed().as_millis());
     Ok(())
 }
