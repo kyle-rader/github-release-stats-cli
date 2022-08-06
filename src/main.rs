@@ -36,8 +36,10 @@ impl Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}\n{INDENT}{INDENT}bytes: {}\n{INDENT}{INDENT}downloads: {}\n",
-            self.name, self.size, self.download_count
+            "{}\n{INDENT}{INDENT}MB: {:.2}\n{INDENT}{INDENT}downloads: {:.2}k\n",
+            self.name,
+            (self.size as f32) / 1_000_000f32,
+            (self.download_count as f32) / 1_000f32
         )
     }
 }
@@ -54,13 +56,16 @@ impl Display for Release {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} @ {}\n",
+            "Release: {}\nTag: {}\n",
             self.name.clone().unwrap_or("<unnamed>".into()),
             self.tag_name.clone().unwrap_or("<untagged>".into())
         )?;
 
-        for a in self.assets.clone() {
-            write!(f, "{INDENT}{}", a)?;
+        if self.assets.len() > 0 {
+            write!(f, "Assets:\n")?;
+            for a in self.assets.clone() {
+                write!(f, "{INDENT}{}", a)?;
+            }
         }
         write!(f, "")
     }
@@ -80,7 +85,8 @@ fn main() -> Result<(), reqwest::Error> {
         user, repo, latest, ..
     } = Args::parse();
 
-    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page=5");
+    let per_page = if latest { 1 } else { 5 };
+    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page={per_page}");
 
     let client = reqwest::blocking::Client::builder()
         .user_agent("github-stats-cli")
@@ -92,7 +98,7 @@ fn main() -> Result<(), reqwest::Error> {
 
     timeit! {
         "printing",
-        for r in data.iter().take(if latest { 1 } else { data.len() }) {
+        for r in data {
             println!("{r}");
         }
     };
