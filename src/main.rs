@@ -1,6 +1,15 @@
 use std::{fmt::Display, time::Instant};
 
+use clap::Parser;
 use serde::Deserialize;
+
+#[derive(Debug, Parser)]
+struct Args {
+    /// the user
+    user: String,
+    /// the repo
+    repo: String,
+}
 
 const INDENT: &str = "  ";
 
@@ -46,12 +55,9 @@ impl Display for Release {
 }
 
 fn main() -> Result<(), reqwest::Error> {
-    const USER: &str = "AzureAD";
-    const REPO: &str = "microsoft-authentication-cli";
-    // const USER: &str = "rust-lang";
-    // const REPO: &str = "rust";
+    let Args { user, repo } = Args::parse();
 
-    let url = format!("https://api.github.com/repos/{USER}/{REPO}/releases?per_page=100");
+    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page=100");
 
     let client = reqwest::blocking::Client::builder()
         .user_agent("github-stats-cli")
