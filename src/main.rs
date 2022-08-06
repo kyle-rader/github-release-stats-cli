@@ -20,7 +20,7 @@ struct Args {
     latest: bool,
     /// output mode
     #[clap(arg_enum)]
-    output: OutputMode,
+    output: Option<OutputMode>,
 }
 
 const INDENT: &str = "  ";
@@ -66,6 +66,15 @@ impl Display for Release {
     }
 }
 
+macro_rules! timeit {
+    ($name:expr, $e:expr) => {{
+        let now = Instant::now();
+        let val = $e;
+        println!("{} took {} ms", $name, now.elapsed().as_millis());
+        val
+    }};
+}
+
 fn main() -> Result<(), reqwest::Error> {
     let Args {
         user, repo, latest, ..
@@ -77,18 +86,15 @@ fn main() -> Result<(), reqwest::Error> {
         .user_agent("github-stats-cli")
         .build()?;
 
-    let now = Instant::now();
-    let response = client.get(url).send()?;
-    println!("web request took {} ms.", now.elapsed().as_millis());
+    let response = timeit! {"get data", client.get(url).send()?};
 
-    let now = Instant::now();
-    let data: Vec<Release> = response.json()?;
-    println!("parsing took {} ms.", now.elapsed().as_millis());
+    let data: Vec<Release> = timeit! {"parse json", response.json()?};
 
-    let now = Instant::now();
-    for r in data.iter().take(if latest { 1 } else { data.len() }) {
-        println!("{r}");
-    }
-    println!("printing took {} ms.", now.elapsed().as_millis());
+    timeit! {
+        "printing",
+        for r in data.iter().take(if latest { 1 } else { data.len() }) {
+            println!("{r}");
+        }
+    };
     Ok(())
 }
