@@ -2,6 +2,8 @@ use std::{fmt::Display, time::Instant};
 
 use serde::Deserialize;
 
+const INDENT: &str = "  ";
+
 #[derive(Deserialize, Clone)]
 struct Asset {
     name: String,
@@ -13,7 +15,7 @@ impl Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}\n\t\tbytes: {}\n\t\tdownloads: {}\n",
+            "{}\n{INDENT}{INDENT}bytes: {}\n{INDENT}{INDENT}downloads: {}\n",
             self.name, self.size, self.download_count
         )
     }
@@ -37,17 +39,17 @@ impl Display for Release {
         )?;
 
         for a in self.assets.clone() {
-            write!(f, "\t{}", a)?;
+            write!(f, "{INDENT}{}", a)?;
         }
         write!(f, "")
     }
 }
 
 fn main() -> Result<(), reqwest::Error> {
-    // const USER: &str = "AzureAD";
-    // const REPO: &str = "microsoft-authentication-cli";
-    const USER: &str = "rust-lang";
-    const REPO: &str = "rust";
+    const USER: &str = "AzureAD";
+    const REPO: &str = "microsoft-authentication-cli";
+    // const USER: &str = "rust-lang";
+    // const REPO: &str = "rust";
 
     let url = format!("https://api.github.com/repos/{USER}/{REPO}/releases?per_page=100");
 
