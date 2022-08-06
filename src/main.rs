@@ -1,7 +1,13 @@
 use std::{fmt::Display, time::Instant};
 
-use clap::Parser;
+use clap::{clap_derive::ArgEnum, Parser};
 use serde::Deserialize;
+
+#[derive(Debug, ArgEnum, Clone)]
+enum OutputMode {
+    Text,
+    Json,
+}
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -12,6 +18,9 @@ struct Args {
     /// Only the latest release
     #[clap(short, long)]
     latest: bool,
+    /// output mode
+    #[clap(arg_enum)]
+    output: OutputMode,
 }
 
 const INDENT: &str = "  ";
@@ -58,7 +67,9 @@ impl Display for Release {
 }
 
 fn main() -> Result<(), reqwest::Error> {
-    let Args { user, repo, latest } = Args::parse();
+    let Args {
+        user, repo, latest, ..
+    } = Args::parse();
 
     let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page=5");
 
