@@ -79,7 +79,7 @@ macro_rules! timeit {
     }};
 }
 
-fn main() -> Result<(), reqwest::Error> {
+fn main() -> anyhow::Result<()> {
     let Args {
         user, repo, latest, ..
     } = Args::parse();
@@ -91,20 +91,18 @@ fn main() -> Result<(), reqwest::Error> {
         .user_agent("github-stats-cli")
         .build()?;
 
-    let (response, response_time) = timeit! { client.get(url).send()?};
+    let (response, response_time) = timeit! { client.get(url.clone()).send()?.text()? };
 
-    let (data, parse_time): (Vec<Release>, u128) = timeit! {response.json()?};
+    let (data, parse_time): (Vec<Release>, u128) = timeit! { serde_json::from_str(&response)? };
 
-    let (_, print_time) = timeit! {
-        for r in data {
-            println!("{r}");
-        }
-    };
+    for r in data {
+        println!("{r}");
+    }
 
+    println!("From: {url}");
     println!("Timings:");
     println!("{:6}: {:.2} ms", "fetch", response_time);
     println!("{:6}: {:.2} ms", "parse", parse_time);
-    println!("{:6}: {:.2} ms", "print", print_time);
 
     Ok(())
 }
