@@ -9,6 +9,9 @@ struct Args {
     user: String,
     /// the repo
     repo: String,
+    /// Only the latest release
+    #[clap(short, long)]
+    latest: bool,
 }
 
 const INDENT: &str = "  ";
@@ -55,9 +58,9 @@ impl Display for Release {
 }
 
 fn main() -> Result<(), reqwest::Error> {
-    let Args { user, repo } = Args::parse();
+    let Args { user, repo, latest } = Args::parse();
 
-    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page=100");
+    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page=5");
 
     let client = reqwest::blocking::Client::builder()
         .user_agent("github-stats-cli")
@@ -72,7 +75,7 @@ fn main() -> Result<(), reqwest::Error> {
     println!("parsing took {} ms.", now.elapsed().as_millis());
 
     let now = Instant::now();
-    for r in data {
+    for r in data.iter().take(if latest { 1 } else { data.len() }) {
         println!("{r}");
     }
     println!("printing took {} ms.", now.elapsed().as_millis());
