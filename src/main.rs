@@ -72,11 +72,10 @@ impl Display for Release {
 }
 
 macro_rules! timeit {
-    ($name:expr, $e:expr) => {{
+    ($e:expr) => {{
         let now = Instant::now();
         let val = $e;
-        println!("{} took {} ms", $name, now.elapsed().as_millis());
-        val
+        (val, now.elapsed().as_millis())
     }};
 }
 
@@ -92,15 +91,20 @@ fn main() -> Result<(), reqwest::Error> {
         .user_agent("github-stats-cli")
         .build()?;
 
-    let response = timeit! {"get data", client.get(url).send()?};
+    let (response, response_time) = timeit! { client.get(url).send()?};
 
-    let data: Vec<Release> = timeit! {"parse json", response.json()?};
+    let (data, parse_time): (Vec<Release>, u128) = timeit! {response.json()?};
 
-    timeit! {
-        "printing",
+    let (_, print_time) = timeit! {
         for r in data {
             println!("{r}");
         }
     };
+
+    println!("Timings:");
+    println!("{:6}: {:.2} ms", "fetch", response_time);
+    println!("{:6}: {:.2} ms", "parse", parse_time);
+    println!("{:6}: {:.2} ms", "print", print_time);
+
     Ok(())
 }
