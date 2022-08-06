@@ -13,9 +13,9 @@ cargo install --git https://github.com/kyle-rader/github-release-stats-cli
 ## Usage
 
 ```shell
-ghrc rust-lang rust --latest
+ghrs rust-lang rust --latest
 ```
 
 ```shell
-ghrc azuread microsoft-authentication-cli
+ghrs azuread microsoft-authentication-cli
 ```
