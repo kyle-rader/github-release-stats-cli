@@ -1,4 +1,4 @@
-use std::{fmt::Display, time::Instant};
+use std::{fmt::Display, fs, time::Instant};
 
 use clap::{clap_derive::ArgEnum, Parser};
 use serde::Deserialize;
@@ -63,13 +63,13 @@ impl Display for Release {
         write!(
             f,
             "Release {}\nTag     {}\nCreated {}\n",
-            self.name.clone().unwrap_or("<unnamed>".into()),
-            self.tag_name.clone().unwrap_or("<untagged>".into()),
+            self.name.clone().unwrap_or_else(|| "<unnamed>".into()),
+            self.tag_name.clone().unwrap_or_else(|| "<untagged>".into()),
             self.created_at,
         )?;
 
-        if self.assets.len() > 0 {
-            write!(f, "Assets:\n")?;
+        if !self.assets.is_empty() {
+            writeln!(f, "Assets")?;
             for a in self.assets.clone() {
                 writeln!(f, "• {}", a)?;
             }
@@ -92,13 +92,25 @@ fn main() -> anyhow::Result<()> {
     } = Args::parse();
 
     let per_page = if latest { 1 } else { 5 };
-    let url = format!("https://api.github.com/repos/{user}/{repo}/releases?per_page={per_page}");
+    let id = format!("{user}/{repo}");
+    let cache = format!(".ghrs.{}.cache", id.replace('/', "."));
+    let cache = std::path::Path::new(&cache);
+    let url = format!("https://api.github.com/repos/{id}/releases?per_page={per_page}");
 
     let client = reqwest::blocking::Client::builder()
         .user_agent("github-stats-cli")
         .build()?;
 
-    let (response, response_time) = timeit! { client.get(url.clone()).send()?.text()? };
+    let (response, response_time) = timeit! {
+        if cache.exists() {
+            fs::read_to_string(cache)?
+        }
+        else {
+            let content = client.get(url.clone()).send()?.text()?;
+            fs::write(cache, &content)?;
+            content
+        }
+    };
 
     let (data, parse_time): (Vec<Release>, u128) = timeit! { serde_json::from_str(&response)? };
 
