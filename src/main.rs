@@ -21,9 +21,9 @@ struct Args {
     /// output mode
     #[clap(arg_enum)]
     output: Option<OutputMode>,
-    /// Force a new request and update cache
-    #[clap(long)]
-    force: bool,
+    /// Pull from the cache file
+    #[clap(short, long)]
+    cached: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -94,7 +94,7 @@ fn main() -> anyhow::Result<()> {
         user,
         repo,
         latest,
-        force,
+        cached,
         ..
     } = Args::parse();
 
@@ -102,20 +102,20 @@ fn main() -> anyhow::Result<()> {
     let id = format!("{user}/{repo}");
 
     let cache_file = format!("{}.cache", id.replace('/', "."));
-    let cache: PathBuf = env::temp_dir().join(&cache_file);
+    let cache_file: PathBuf = env::temp_dir().join(&cache_file);
 
     let url = format!("https://api.github.com/repos/{id}/releases?per_page={per_page}");
 
     let (response, response_time) = timeit! {
-        if !force && cache.exists() {
-            fs::read_to_string(cache)?
+        if cached && cache_file.exists() {
+            fs::read_to_string(cache_file)?
         }
         else {
             let client = reqwest::blocking::Client::builder()
                 .user_agent("ghrs")
                 .build()?;
             let content = client.get(url.clone()).send()?.text()?;
-            fs::write(cache, &content)?;
+            fs::write(cache_file, &content)?;
             content
         }
     };
