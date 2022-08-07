@@ -1,5 +1,5 @@
 [package]
-name = "ghr-stats-cli"
+name = "github-release-stats-cli"
 version = "0.2.0"
 edition = "2021"
 

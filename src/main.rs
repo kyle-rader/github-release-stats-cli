@@ -16,6 +16,7 @@ enum OutputMode {
 }
 
 #[derive(Debug, Parser)]
+#[clap(version)]
 struct Args {
     /// the user
     user: String,
