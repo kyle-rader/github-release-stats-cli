@@ -1,4 +1,10 @@
-use std::{env, fmt::Display, fs, path::PathBuf, time::Instant};
+use std::{
+    env,
+    fmt::Display,
+    fs,
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use clap::{clap_derive::ArgEnum, Parser};
 use serde::Deserialize;
@@ -85,7 +91,7 @@ macro_rules! timeit {
     ($e:expr) => {{
         let now = Instant::now();
         let val = $e;
-        (val, now.elapsed().as_millis())
+        (val, now.elapsed())
     }};
 }
 
@@ -120,7 +126,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    let (data, parse_time): (Vec<Release>, u128) = timeit! { serde_json::from_str(&response)? };
+    let (data, parse_time): (Vec<Release>, Duration) = timeit! { serde_json::from_str(&response)? };
 
     for r in data {
         println!("{r}");
@@ -128,8 +134,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("From: {url}");
     println!("Timings:");
-    println!("{:6}: {:.2} ms", "fetch", response_time);
-    println!("{:6}: {:.2} ms", "parse", parse_time);
+    println!("{:6}: {:.2} ms", "fetch", response_time.as_millis());
+    println!("{:6}: {:.2} μs", "parse", parse_time.as_micros());
 
     Ok(())
 }
