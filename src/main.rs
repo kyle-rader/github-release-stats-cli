@@ -1,4 +1,4 @@
-use std::{fmt::Display, fs, time::Instant};
+use std::{env, fmt::Display, fs, path::PathBuf, time::Instant};
 
 use clap::{clap_derive::ArgEnum, Parser};
 use serde::Deserialize;
@@ -21,6 +21,9 @@ struct Args {
     /// output mode
     #[clap(arg_enum)]
     output: Option<OutputMode>,
+    /// Force a new request and update cache
+    #[clap(long)]
+    force: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -88,24 +91,29 @@ macro_rules! timeit {
 
 fn main() -> anyhow::Result<()> {
     let Args {
-        user, repo, latest, ..
+        user,
+        repo,
+        latest,
+        force,
+        ..
     } = Args::parse();
 
     let per_page = if latest { 1 } else { 5 };
     let id = format!("{user}/{repo}");
-    let cache = format!(".ghrs.{}.cache", id.replace('/', "."));
-    let cache = std::path::Path::new(&cache);
+
+    let cache_file = format!("{}.cache", id.replace('/', "."));
+    let cache: PathBuf = env::temp_dir().join(&cache_file);
+
     let url = format!("https://api.github.com/repos/{id}/releases?per_page={per_page}");
 
-    let client = reqwest::blocking::Client::builder()
-        .user_agent("github-stats-cli")
-        .build()?;
-
     let (response, response_time) = timeit! {
-        if cache.exists() {
+        if !force && cache.exists() {
             fs::read_to_string(cache)?
         }
         else {
+            let client = reqwest::blocking::Client::builder()
+                .user_agent("ghrs")
+                .build()?;
             let content = client.get(url.clone()).send()?.text()?;
             fs::write(cache, &content)?;
             content
