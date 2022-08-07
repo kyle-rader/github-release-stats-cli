@@ -23,8 +23,6 @@ struct Args {
     output: Option<OutputMode>,
 }
 
-const INDENT: &str = "  ";
-
 #[derive(Deserialize, Clone)]
 struct Asset {
     name: String,
@@ -34,11 +32,19 @@ struct Asset {
 
 impl Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        writeln!(f, " {}", self.name)?;
+        writeln!(
             f,
-            "{}\n{INDENT}{INDENT}MB: {:.2}\n{INDENT}{INDENT}downloads: {:.2}k\n",
-            self.name,
-            (self.size as f32) / 1_000_000f32,
+            "{:5} {:2} {:.2}MB",
+            "",
+            "📦",
+            (self.size as f32) / 1_000_000f32
+        )?;
+        writeln!(
+            f,
+            "{:5} {:3} {:.2}k",
+            "",
+            "↘️",
             (self.download_count as f32) / 1_000f32
         )
     }
@@ -48,7 +54,7 @@ impl Display for Asset {
 struct Release {
     name: Option<String>,
     tag_name: Option<String>,
-    // created_at: String, // we can do better
+    created_at: String, // we can do better
     assets: Vec<Asset>,
 }
 
@@ -56,15 +62,16 @@ impl Display for Release {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Release: {}\nTag: {}\n",
+            "Release {}\nTag     {}\nCreated {}\n",
             self.name.clone().unwrap_or("<unnamed>".into()),
-            self.tag_name.clone().unwrap_or("<untagged>".into())
+            self.tag_name.clone().unwrap_or("<untagged>".into()),
+            self.created_at,
         )?;
 
         if self.assets.len() > 0 {
             write!(f, "Assets:\n")?;
             for a in self.assets.clone() {
-                write!(f, "{INDENT}{}", a)?;
+                writeln!(f, "{:2} • {}", "", a)?;
             }
         }
         write!(f, "")
