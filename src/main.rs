@@ -32,17 +32,17 @@ struct Asset {
 
 impl Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, " {}", self.name)?;
+        writeln!(f, "{}", self.name)?;
         writeln!(
             f,
-            "{:5} {:2} {:.2}MB",
+            "{:2}{:2} {:.2}MB",
             "",
             "📦",
             (self.size as f32) / 1_000_000f32
         )?;
         writeln!(
             f,
-            "{:5} {:3} {:.2}k",
+            "{:2}{:3} {:.2}k",
             "",
             "↘️",
             (self.download_count as f32) / 1_000f32
@@ -71,7 +71,7 @@ impl Display for Release {
         if self.assets.len() > 0 {
             write!(f, "Assets:\n")?;
             for a in self.assets.clone() {
-                writeln!(f, "{:2} • {}", "", a)?;
+                writeln!(f, "• {}", a)?;
             }
         }
         write!(f, "")
