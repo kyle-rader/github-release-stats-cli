@@ -70,13 +70,19 @@ struct Release {
 
 impl Display for Release {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Release {}\nTag     {}\nCreated {}\n",
-            self.name.clone().unwrap_or_else(|| "<unnamed>".into()),
-            self.tag_name.clone().unwrap_or_else(|| "<untagged>".into()),
-            self.created_at,
-        )?;
+        let name = self.name.clone().unwrap_or_else(|| "<unnamed>".into());
+        let tag = self.tag_name.clone().unwrap_or_else(|| "<untagged>".into());
+        let total_downloads = self
+            .assets
+            .iter()
+            .map(|a| a.download_count)
+            .reduce(|acc, v| acc + v)
+            .unwrap_or(0);
+
+        writeln!(f, "Release   {}", name)?;
+        writeln!(f, "Tag       {}", tag)?;
+        writeln!(f, "Created   {}", self.created_at)?;
+        writeln!(f, "Downloads {:.2}k", (total_downloads as f32) / 1000.0)?;
 
         if !self.assets.is_empty() {
             writeln!(f, "Assets")?;
